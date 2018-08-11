@@ -9,7 +9,8 @@ import Uploader                     from "./components/Uploader";
 import moment                       from 'moment';
 import HoursList                    from "./components/HoursList";
 import {sortByMonth}                from "./utils/Utils";
-
+import logo                         from './timesheet-logo.png';
+import CssBaseline                  from "@material-ui/core/CssBaseline/CssBaseline";
 
 class App extends Component {
     constructor(props) {
@@ -90,32 +91,36 @@ class App extends Component {
 
         }
         return (
-            <Fragment>
-                <AppBar position="static">
+            <React.Fragment>
+                <CssBaseline/>
+                <AppBar color={"default"}>
                     <Toolbar>
-                        <Typography variant="title" color="inherit">
-                            Overtime Calculator
-                        </Typography>
+                        <img src={logo} alt={'TimeSheet'} height={'40px'}/>
                     </Toolbar>
                 </AppBar>
-                <Grid container spacing={40}>
-                    <Grid item xs={12}>
-                        <Uploader fileHandler={this.handleFileUploadChange}
-                                  dateFormat={this.state.timeSheetDateFormat}
-                                  startRow={this.state.startRow}
-                                  totalRow={this.state.totalRow}
-                                  handleDateFormat={this.handleDateFormatChange}
-                                  handleStartRow={this.handleDateFormatChange}
-                                  handleTotalRow={this.handleDateFormatChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <HoursList total={totalHoursLogged} list={monthHours}/>
-                    </Grid>
-                </Grid>
-            </Fragment>
-        );
-    }
-}
 
-export default App;
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <Grid item xs={12}>
+                    <Uploader fileHandler={this.handleFileUploadChange}
+                              dateFormat={this.state.timeSheetDateFormat}
+                              startRow={this.state.startRow}
+                              totalRow={this.state.totalRow}
+                              handleDateFormat={this.handleDateFormatChange}
+                              handleStartRow={this.handleDateFormatChange}
+                              handleTotalRow={this.handleDateFormatChange}
+                    />
+                </Grid>
+                <Grid item xs={12}>
+                    <HoursList total={totalHoursLogged} list={monthHours}/>
+                </Grid>
+
+            </React.Fragment>
+    );
+    }
+    }
+
+    export default App;
