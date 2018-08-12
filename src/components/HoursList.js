@@ -11,19 +11,40 @@ import Typography       from "@material-ui/core/Typography";
 import Grow             from '@material-ui/core/Grow';
 import Card             from "@material-ui/core/Card/Card";
 import {convertToHours} from "../utils/Utils";
+import moment           from 'moment';
 
 let totalOvertime     = 0.0;
 let totalWorkingHours = 0.0;
 let totalWorkingDays  = 0;
+let totalLeaves       = 0;
 
 class HoursList extends React.Component {
-    calculateOvertimeHours = (hours) => {
-        totalOvertime = totalOvertime + hours;
-        return convertToHours(hours);
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        totalOvertime     = 0.0;
+        totalWorkingHours = 0.0;
+        totalWorkingDays  = 0;
+        totalLeaves       = 0;
+    }
+
+    calculateOvertimeHours = (workingDays, workedHours, leavesData, month) => {
+        const leavesTaken           = leavesData[month] === undefined ? 0 : leavesData[month];
+        const hoursShouldHaveWorked = (workingDays - leavesTaken) * 8;
+        const overtime              = workedHours - hoursShouldHaveWorked;
+        totalOvertime               = totalOvertime + overtime;
+        return convertToHours(overtime);
     };
     calculateWorkingHours  = (hours) => {
         totalWorkingHours = totalWorkingHours + hours;
         return convertToHours(hours);
+    };
+
+    calculateLeaves = (leavesData, month) => {
+        const numberOfLeaves = leavesData[month];
+        if (numberOfLeaves !== undefined) {
+            totalLeaves = totalLeaves + numberOfLeaves;
+            return numberOfLeaves;
+        }
+        return "---";
     };
 
     calculateTotalWorkingDays = (days) => {
@@ -32,11 +53,22 @@ class HoursList extends React.Component {
     };
 
     render() {
-        const rows        = this.props.list;
-        const workingDays = getWorkingDays();
-        const total       = this.props.total;
-
+        const rows                      = this.props.list;
+        const {total, holidays, leaves} = this.props;
+        const workingDays               = getWorkingDays(holidays);
+        const leavesParsed              = {};
+        if (leaves) {
+            for (let leave of leaves) {
+                const extractedDate     = moment(leave);
+                const monthYear         = extractedDate.format("MMMM") + " " + extractedDate.format("YYYY");
+                const existingValue     = leavesParsed[monthYear] === undefined ? 0 : leavesParsed[monthYear];
+                leavesParsed[monthYear] = existingValue + 1;
+            }
+        }
         return (<Grid>
+            <br/>
+            <br/>
+            <br/>
             {rows.length > 0 &&
             <Grid container justify={"center"} direction={"row"} spacing={8}>
                 <Grid item xs={12} sm={4}>
@@ -69,7 +101,8 @@ class HoursList extends React.Component {
                                         <TableCell>Month</TableCell>
                                         <TableCell>Total Working Days</TableCell>
                                         <TableCell>Total Working Hours</TableCell>
-                                        <TableCell>Hours</TableCell>
+                                        <TableCell>Leaves</TableCell>
+                                        <TableCell>Worked Hours</TableCell>
                                         <TableCell>Overtime Hours</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -81,12 +114,14 @@ class HoursList extends React.Component {
                                                     {row.month}
                                                 </TableCell>
                                                 <TableCell
-                                                    numeric>{this.calculateTotalWorkingDays(workingDays[row.month].days)}</TableCell>
+                                                    numeric>{this.calculateTotalWorkingDays(workingDays[row.month])}</TableCell>
                                                 <TableCell
-                                                    numeric>{this.calculateWorkingHours(workingDays[row.month].hours)}</TableCell>
+                                                    numeric>{this.calculateWorkingHours(8 * workingDays[row.month])}</TableCell>
+                                                <TableCell
+                                                    numeric>{this.calculateLeaves(leavesParsed, row.month)}</TableCell>
                                                 <TableCell numeric>{convertToHours(row.hours)}</TableCell>
                                                 <TableCell
-                                                    numeric>{this.calculateOvertimeHours(row.hours - workingDays[row.month].hours)}</TableCell>
+                                                    numeric>{this.calculateOvertimeHours(workingDays[row.month], row.hours, leavesParsed, row.month)}</TableCell>
                                             </TableRow>
                                         )
                                     })}
@@ -98,6 +133,8 @@ class HoursList extends React.Component {
                                                    numeric>{totalWorkingDays}</TableCell>
                                         <TableCell variant={"head"}
                                                    numeric>{convertToHours(totalWorkingHours)}</TableCell>
+                                        <TableCell variant={"head"}
+                                                   numeric>{totalLeaves}</TableCell>
                                         <TableCell variant={"head"}
                                                    numeric>{convertToHours(total)}</TableCell>
                                         <TableCell variant={"head"}
