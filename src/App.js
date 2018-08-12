@@ -1,16 +1,15 @@
-import React, {Component, Fragment} from 'react';
+import React, {Component} from 'react';
 import './App.css';
-import Grid                         from '@material-ui/core/Grid/Grid'
-import * as XLSX                    from 'xlsx';
-import AppBar                       from '@material-ui/core/AppBar';
-import Toolbar                      from '@material-ui/core/Toolbar';
-import Typography                   from '@material-ui/core/Typography';
-import Uploader                     from "./components/Uploader";
-import moment                       from 'moment';
-import HoursList                    from "./components/HoursList";
-import {sortByMonth}                from "./utils/Utils";
-import logo                         from './timesheet-logo.png';
-import CssBaseline                  from "@material-ui/core/CssBaseline/CssBaseline";
+import Grid               from '@material-ui/core/Grid/Grid'
+import * as XLSX          from 'xlsx';
+import AppBar             from '@material-ui/core/AppBar';
+import Toolbar            from '@material-ui/core/Toolbar';
+import Uploader           from "./components/Uploader";
+import moment             from 'moment';
+import HoursList          from "./components/HoursList";
+import {sortByMonth}      from "./utils/Utils";
+import logo               from './timesheet-logo.png';
+import CssBaseline        from "@material-ui/core/CssBaseline/CssBaseline";
 
 class App extends Component {
     constructor(props) {
