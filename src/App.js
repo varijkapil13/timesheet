@@ -4,29 +4,51 @@ import Grid               from '@material-ui/core/Grid/Grid'
 import * as XLSX          from 'xlsx';
 import AppBar             from '@material-ui/core/AppBar';
 import Toolbar            from '@material-ui/core/Toolbar';
-import Uploader           from "./components/Uploader";
 import moment             from 'moment';
 import HoursList          from "./components/HoursList";
 import {sortByMonth}      from "./utils/Utils";
 import logo               from './timesheet-logo.png';
 import CssBaseline        from "@material-ui/core/CssBaseline/CssBaseline";
+import IconButton         from "@material-ui/core/IconButton/IconButton";
+import MenuIcon           from '@material-ui/icons/Menu';
+import CloseIcon          from '@material-ui/icons/Close'
+import Collapse           from "@material-ui/core/Collapse/Collapse";
+import Uploader           from "./components/Uploader";
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
             timeSheet          : null,
+            holidaySheet       : null,
             timeSheetDateFormat: 'DD/MM/YYYY',
+            holidayDateFormat  : 'DD/MM/YYYY',
             totalRow           : undefined,
-            startRow           : undefined
+            startRow           : undefined,
+            showMenu           : true,
+            holidayData        : null,
+            leavesData         : null,
+            worksheetData      : null
         }
     }
 
-    handleFileUploadChange = timeSheet => {
-        let worksheetData = null;
-        if (timeSheet != null) {
-            const name = timeSheet.name;
-            console.log("name", name);
+    handleShowMenu = () => {
+        this.setState({
+            timeSheet          : null,
+            holidaySheet       : null,
+            timeSheetDateFormat: 'DD/MM/YYYY',
+            holidayDateFormat  : 'DD/MM/YYYY',
+            totalRow           : undefined,
+            startRow           : undefined,
+            showMenu           : !this.state.showMenu,
+            holidayData        : null,
+            leavesData         : null,
+            worksheetData      : null
+        })
+    };
+
+    fileUploadHandler = (timeSheet, file) => {
+        if (file != null) {
             const reader = new FileReader();
 
             reader.onload = (evt) => {
@@ -34,21 +56,53 @@ class App extends Component {
                 const bstr = evt.target.result;
                 const wb   = XLSX.read(bstr, {type: 'binary'});
                 /* Get the worksheet */
-                const ws = wb.Sheets[wb.SheetNames[1]];
-                /* Convert array of arrays */
-                worksheetData = XLSX.utils.sheet_to_json(ws, {header: 1});
 
-                /* Update state */
-                this.setState({timeSheet, worksheetData});
+                if (timeSheet) {
+                    const ws = wb.Sheets[wb.SheetNames[1]];
+                    /* Convert array of arrays */
+                    const worksheetData = XLSX.utils.sheet_to_json(ws, {header: 1});
+
+                    /* Update state */
+                    this.setState({timeSheet: file, worksheetData, showMenu: false});
+                }
+                else {
+                    const holidaysEntries = wb.Sheets[wb.SheetNames[0]];
+                    const leaves          = wb.Sheets[wb.SheetNames[1]];
+                    /* Convert array of arrays */
+                    const holidayData = XLSX.utils.sheet_to_json(holidaysEntries, {header: 1});
+                    const leavesData  = XLSX.utils.sheet_to_json(leaves, {header: 1});
+
+                    /* Update state */
+                    this.setState({
+                        holidaySheet: file,
+                        holidayData : this.convertToDatesArray(holidayData),
+                        leavesData  : this.convertToDatesArray(leavesData)
+                    });
+                }
+
             };
-            reader.readAsBinaryString(timeSheet);
+            reader.readAsBinaryString(file);
         }
 
     };
 
-    handleDateFormatChange = (event) => {
-        const timeSheetDateFormat = event.target.value;
+    convertToDatesArray = stringArray => {
+        if (stringArray !== null) {
+            return stringArray.map(element => {
+                return moment((element[0]), this.state.holidayDateFormat).format();
+            });
+        }
+        return [];
+    };
+
+
+    handleDateFormatChange        = (event) => {
+        const timeSheetDateFormat = (event.target.value).toUpperCase();
         this.setState({timeSheetDateFormat})
+    };
+    handleHolidayDateFormatChange = (event) => {
+        const holidayDateFormat = (event.target.value).toUpperCase();
+        this.setState({holidayDateFormat})
     };
 
 
@@ -67,7 +121,7 @@ class App extends Component {
             const relevantArray   = worksheetData.slice(2);
             const parsedWorksheet = relevantArray.map(element => {
                 return {
-                    date : moment((element[dateColumn]), dateFormat),
+                    date : moment.utc((element[dateColumn]), dateFormat),
                     hours: parseFloat(element[hoursColumn])
                 };
             });
@@ -94,6 +148,11 @@ class App extends Component {
                 <CssBaseline/>
                 <AppBar color={"default"}>
                     <Toolbar>
+                        <IconButton color="inherit" aria-label="Menu" onClick={(e) => this.handleShowMenu()}>
+                            {this.state.showMenu || <MenuIcon/>}
+                            {this.state.showMenu && <CloseIcon/>}
+
+                        </IconButton>
                         <img src={logo} alt={'TimeSheet'} height={'40px'}/>
                     </Toolbar>
                 </AppBar>
@@ -102,9 +161,10 @@ class App extends Component {
                 <br/>
                 <br/>
                 <br/>
-                <br/>
-                <Grid item xs={12}>
-                    <Uploader fileHandler={this.handleFileUploadChange}
+                <Collapse in={this.state.showMenu}>
+                    <Uploader fileUploadHandler={this.fileUploadHandler}
+                              holidayDateFormat={this.state.holidayDateFormat}
+                              handleHolidayDateFormat={this.handleHolidayDateFormatChange}
                               dateFormat={this.state.timeSheetDateFormat}
                               startRow={this.state.startRow}
                               totalRow={this.state.totalRow}
@@ -112,14 +172,17 @@ class App extends Component {
                               handleStartRow={this.handleDateFormatChange}
                               handleTotalRow={this.handleDateFormatChange}
                     />
-                </Grid>
+                </Collapse>
+
+
                 <Grid item xs={12}>
-                    <HoursList total={totalHoursLogged} list={monthHours}/>
+                    <HoursList total={totalHoursLogged} list={monthHours} holidays={this.state.holidayData}
+                               leaves={this.state.leavesData}/>
                 </Grid>
 
             </React.Fragment>
-    );
+        );
     }
-    }
+}
 
-    export default App;
+export default App;
