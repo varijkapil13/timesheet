@@ -7,7 +7,7 @@
     "@material-ui/icons": "^2.0.1",
     "moment": "^2.22.2",
     "moment-business": "^3.0.1",
-    "react": "^16.4.2",
+    "react": "^16.6.3",
     "react-dom": "^16.4.2",
     "react-scripts": "2.0.3",
     "xlsx": "^0.13.3"
@@ -24,6 +24,9 @@
   },
   "homepage": "http://varijkapil13.github.io/timesheet",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.86.0",
     "gh-pages": "^1.2.0",
     "husky": "1.1.0",
     "lint-staged": "7.3.0",
